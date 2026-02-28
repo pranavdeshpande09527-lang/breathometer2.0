@@ -7,13 +7,12 @@ def find_systolic_peaks(signal: np.ndarray, fs: float) -> np.ndarray:
     fs: sampling frequency (FPS)
     Returns indices of the peaks.
     """
-    # Minimum distance between peaks: assuming max HR is 240 BPM (4 Hz)
-    # The minimum distance between beats in seconds is 60/240 = 0.25 s
-    min_distance_frames = int(fs * 0.25)
+    # Assuming max resting HR is 150 BPM (2.5 Hz)
+    # The minimum distance between beats in seconds is 60/150 = 0.4 s
+    min_distance_frames = int(fs * 0.4)
     
-    # Find peaks. 
-    # Height threshold can be adjusted or kept None/0 if signal is normalized.
-    # With zero-mean normalized signal, we expect peaks to be > 0.
-    peaks, _ = find_peaks(signal, distance=max(1, min_distance_frames), height=0)
+    # Use prominence to handle noise. 
+    # Lowered to 0.1 to maximize sensitivity for weak PPG pulses.
+    peaks, _ = find_peaks(signal, distance=max(1, min_distance_frames), prominence=0.1)
     
     return peaks

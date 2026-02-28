@@ -5,17 +5,29 @@ def normalize_signal(signal: np.ndarray) -> np.ndarray:
     """Zero-mean unit-variance normalization"""
     if len(signal) == 0:
         return signal
+    mean = np.mean(signal)
     std = np.std(signal)
     if std == 0:
-        return signal - np.mean(signal)
-    return (signal - np.mean(signal)) / std
+        return signal - mean
+    return (signal - mean) / std
 
-def bandpass_filter(signal: np.ndarray, fs: float, lowcut: float = 0.7, highcut: float = 4.0, order: int = 4) -> np.ndarray:
+def detrend_signal(signal: np.ndarray, fs: float) -> np.ndarray:
+    """Subtracts a moving average to remove baseline drift"""
+    # Use a window of 1 second for detrending
+    window_size = int(fs)
+    if len(signal) <= window_size:
+        return signal
+    
+    # Simple moving average detrending
+    ma = np.convolve(signal, np.ones(window_size)/window_size, mode='same')
+    return signal - ma
+
+def bandpass_filter(signal: np.ndarray, fs: float, lowcut: float = 0.7, highcut: float = 3.5, order: int = 4) -> np.ndarray:
     """
     Applies a Butterworth bandpass filter to the signal.
     fs: sampling frequency (FPS of the video)
     lowcut: 0.7 Hz ~ 42 BPM
-    highcut: 4.0 Hz ~ 240 BPM
+    highcut: 3.5 Hz ~ 210 BPM
     """
     nyq = 0.5 * fs
     low = lowcut / nyq
