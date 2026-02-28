@@ -79,8 +79,8 @@ export default function Analytics() {
         datasets: [
             {
                 data: Object.values(dist),
-                backgroundColor: ['#1aaf64', '#f59e0b', '#ff3d3d'],
-                borderColor: '#0f0f1a',
+                backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                borderColor: '#0f172a',
                 borderWidth: 3,
                 hoverOffset: 8,
             },
@@ -106,7 +106,7 @@ export default function Analytics() {
                 label: 'AQI',
                 data: (data?.top_polluted_cities || []).map((c) => c.aqi),
                 backgroundColor: (data?.top_polluted_cities || []).map((c) =>
-                    c.aqi <= 100 ? 'rgba(26,175,100,0.6)' : c.aqi <= 200 ? 'rgba(245,158,11,0.6)' : 'rgba(255,61,61,0.6)'
+                    c.aqi <= 100 ? 'rgba(16, 185, 129, 0.6)' : c.aqi <= 200 ? 'rgba(245, 158, 11, 0.6)' : 'rgba(244, 63, 94, 0.6)'
                 ),
                 borderRadius: 8,
                 borderSkipped: false,
@@ -120,7 +120,7 @@ export default function Analytics() {
         plugins: {
             legend: { display: false },
             tooltip: {
-                backgroundColor: '#1a1a2e',
+                backgroundColor: '#1e293b',
                 titleColor: '#e2e8f0',
                 bodyColor: '#94a3b8',
                 borderColor: 'rgba(255,255,255,0.1)',

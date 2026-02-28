@@ -1,14 +1,29 @@
-"""
-POST /predict-pm25 — Predict PM2.5 from weather data.
-"""
-
 from fastapi import APIRouter, HTTPException
 from models.prediction import PredictionRequest, PredictionResponse
 import models.prediction
-from services.ml_predictor import predict_pm25
+from services.ml_predictor import predict_pm25, is_model_available, get_model_error
+from services.risk_model_service import get_risk_model_status, inference_air_quality_risk
 
 router = APIRouter(tags=["ML Prediction"])
 
+@router.post("/predict-ai-lung-risk")
+async def predict_ai_lung_risk(payload: dict):
+    """
+    Advanced ensemble ML endpoint for personalized lung risk forecasting.
+    Expects standard payload dictionary (PM2.5, Age, Smoking_Status, etc.)
+    """
+    available, errorMsg = get_risk_model_status()
+    if not available:
+        raise HTTPException(
+            status_code=503, 
+            detail=f"Advanced Risk ML model not initialized. Please train and restart backend. Reason: {errorMsg}"
+        )
+        
+    result = inference_air_quality_risk(payload)
+    if result is None:
+        raise HTTPException(status_code=500, detail="Inference execution failed internally.")
+        
+    return result
 
 import httpx
 
@@ -16,6 +31,10 @@ import httpx
 async def predict_air_quality(payload: PredictionRequest):
     """Predict PM2.5 via local ML model and fetch real PM10 from OpenWeather."""
     
+    if not is_model_available():
+        err = get_model_error()
+        raise HTTPException(status_code=503, detail=f"ML model not initialized on server. Please train and restart backend. Reason: {err}")
+        
     # 1. Local ML Model directly predicts PM 2.5
     pm25_result = predict_pm25(
         temperature=payload.temperature,
@@ -52,9 +71,6 @@ async def predict_air_quality(payload: PredictionRequest):
         print(f"[WARNING] OpenWeather API failed: {e}")
         # Soft fallback if network fails
         pm10_result = pm25_result * 1.5 if pm25_result else 50.0 
-        
-    if pm25_result is None:
-        raise HTTPException(status_code=500, detail="Local PM2.5 Model not available. Please try again later.")
         
     return {
         "predicted_pm25": pm25_result,

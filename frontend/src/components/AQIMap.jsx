@@ -70,11 +70,11 @@ export default function AQIMap({ lat, lon, apiKey }) {
             <div className="absolute bottom-2 right-2 bg-surface-base0/90 backdrop-blur-md px-3 py-2 rounded-lg border border-brand-terracotta/20 z-[400] text-xs">
                 <div className="font-bold text-white mb-1">PM2.5 Level Tracker</div>
                 <div className="flex gap-1 h-2 w-32 rounded-full overflow-hidden">
-                    <div className="bg-[#1aaf64] flex-1"></div>
-                    <div className="bg-[#f5a623] flex-1"></div>
-                    <div className="bg-[#ff8c00] flex-1"></div>
-                    <div className="bg-[#e53935] flex-1"></div>
-                    <div className="bg-[#8e24aa] flex-1"></div>
+                    <div className="bg-safe-500 flex-1"></div>
+                    <div className="bg-warning-400 flex-1"></div>
+                    <div className="bg-warning-500 flex-1"></div>
+                    <div className="bg-danger-500 flex-1"></div>
+                    <div className="bg-purple-600 flex-1"></div>
                 </div>
                 <div className="flex justify-between text-[10px] text-ink-muted mt-1">
                     <span>Low</span>

@@ -1,27 +1,15 @@
 """
-AQI Service — Crash-proof AQI data fetcher.
-OpenWeatherMap Air Pollution API with 5s timeout + automatic mock fallback.
+AQI Service — Strict Real-Time OpenWeatherMap Fetcher.
+Fetches both air pollution and current weather data. No mock fallbacks allowed.
 """
 
 import os
-import random
 from datetime import datetime, timezone
+import httpx
+from fastapi import HTTPException
 
 # Provided OpenWeather API Key
 AQI_API_KEY = os.getenv("AQI_API_KEY", "92b720fddf2a5c86fd6eb01f8a23430d")
-
-# ── Mock AQI data ────────────────────────────────────────
-MOCK_AQI_DATA = {
-    "nagpur":    {"city": "Nagpur",    "aqi": 145, "dominant_pollutant": "PM2.5", "category": "Unhealthy for Sensitive Groups"},
-    "delhi":     {"city": "Delhi",     "aqi": 285, "dominant_pollutant": "PM2.5", "category": "Very Unhealthy"},
-    "mumbai":    {"city": "Mumbai",    "aqi": 172, "dominant_pollutant": "PM10",  "category": "Unhealthy"},
-    "kolkata":   {"city": "Kolkata",   "aqi": 158, "dominant_pollutant": "PM2.5", "category": "Unhealthy"},
-    "bangalore": {"city": "Bangalore", "aqi": 98,  "dominant_pollutant": "O3",    "category": "Moderate"},
-    "chennai":   {"city": "Chennai",   "aqi": 87,  "dominant_pollutant": "NO2",   "category": "Moderate"},
-    "hyderabad": {"city": "Hyderabad", "aqi": 112, "dominant_pollutant": "PM2.5", "category": "Unhealthy for Sensitive Groups"},
-    "pune":      {"city": "Pune",      "aqi": 78,  "dominant_pollutant": "PM10",  "category": "Moderate"},
-}
-
 
 def _classify_aqi(aqi: int) -> str:
     if aqi <= 50:   return "Good"
@@ -30,7 +18,6 @@ def _classify_aqi(aqi: int) -> str:
     if aqi <= 200:  return "Unhealthy"
     if aqi <= 300:  return "Very Unhealthy"
     return "Hazardous"
-
 
 def _pm25_to_us_aqi(pm25: float) -> int:
     """Convert PM2.5 µg/m³ to US EPA AQI."""
@@ -42,7 +29,6 @@ def _pm25_to_us_aqi(pm25: float) -> int:
     if pm25 <= 500.4:  return int(300 + (200 / 250.0) * (pm25 - 250.4))
     return 500
 
-
 def _dominant(components: dict) -> str:
     keys = {"pm2_5": "PM2.5", "pm10": "PM10", "o3": "O3", "no2": "NO2", "so2": "SO2", "co": "CO"}
     if not components:
@@ -50,72 +36,72 @@ def _dominant(components: dict) -> str:
     best = max(keys.keys(), key=lambda k: components.get(k, 0))
     return keys[best]
 
-
-def _mock_response(city: str) -> dict:
-    """Return mock data for any city."""
-    key = city.lower().strip()
-    if key in MOCK_AQI_DATA:
-        base = MOCK_AQI_DATA[key].copy()
-        base["aqi"] = max(0, base["aqi"] + random.randint(-10, 10))
-    else:
-        base = {
-            "city": city,
-            "aqi": random.randint(50, 180),
-            "dominant_pollutant": random.choice(["PM2.5", "PM10", "O3", "NO2"]),
-            "category": "Moderate",
-        }
-    base["timestamp"] = datetime.now(timezone.utc).isoformat()
-    base["source"] = "mock"
-    return base
-
-
 async def fetch_aqi(city: str) -> dict:
     """
-    Fetch AQI — never raises, never crashes.
-    Tries OpenWeatherMap → falls back to mock.
+    Strict fetch for AQI and Weather.
+    Raises HTTPException if API Key is missing or external fetch fails.
     """
     if not AQI_API_KEY:
-        return _mock_response(city)
+        raise HTTPException(status_code=500, detail="AQI_API_KEY is not configured.")
 
     try:
-        import httpx
-        async with httpx.AsyncClient(timeout=5.0) as client:
-            # Geocode
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            # 1. Geocode City
             geo_url = f"http://api.openweathermap.org/geo/1.0/direct?q={city}&limit=1&appid={AQI_API_KEY}"
             geo_resp = await client.get(geo_url)
             geo_resp.raise_for_status()
             geo_data = geo_resp.json()
+            
             if not geo_data:
-                return _mock_response(city)
+                raise HTTPException(status_code=404, detail=f"City '{city}' not found.")
 
             lat, lon = geo_data[0]["lat"], geo_data[0]["lon"]
+            resolved_city = geo_data[0].get("name", city)
 
-            # Air pollution
+            # 2. Fetch Air Pollution and Weather concurrently
             poll_url = f"http://api.openweathermap.org/data/2.5/air_pollution?lat={lat}&lon={lon}&appid={AQI_API_KEY}"
+            weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&units=metric&appid={AQI_API_KEY}"
+            
+            # Await both independent requests
+            # Even though asyncio.gather is standard, doing sequential awaits is safer for simple scripts
             poll_resp = await client.get(poll_url)
             poll_resp.raise_for_status()
-            poll_data = poll_resp.json()
+            
+            weather_resp = await client.get(weather_url)
+            weather_resp.raise_for_status()
 
+            poll_data = poll_resp.json()
+            weather_data = weather_resp.json()
+
+            # 3. Process Pollution Data
             item = poll_data["list"][0]
             components = item.get("components", {})
-            us_aqi = _pm25_to_us_aqi(components.get("pm2_5", 0))
+            pm25_val = components.get("pm2_5", 0)
+            pm10_val = components.get("pm10", 0)
+            us_aqi = _pm25_to_us_aqi(pm25_val)
 
+            # 4. Construct Strict Response JSON
             return {
-                "city": city,
+                "city": resolved_city,
                 "aqi": us_aqi,
                 "dominant_pollutant": _dominant(components),
                 "category": _classify_aqi(us_aqi),
-                "pollutants": {
-                    "pm25": round(components.get("pm2_5", 0), 1),
-                    "pm10": round(components.get("pm10", 0), 1),
-                    "o3": round(components.get("o3", 0), 1),
-                    "no2": round(components.get("no2", 0), 1),
-                    "so2": round(components.get("so2", 0), 1),
-                    "co": round(components.get("co", 0), 1),
-                },
+                "pm25": round(pm25_val, 1),
+                "pm10": round(pm10_val, 1),
+                "temperature": weather_data.get("main", {}).get("temp"),
+                "humidity": weather_data.get("main", {}).get("humidity"),
+                "pressure": weather_data.get("main", {}).get("pressure"),
+                "visibility": weather_data.get("visibility"),
+                "wind_speed": weather_data.get("wind", {}).get("speed"),
                 "timestamp": datetime.now(timezone.utc).isoformat(),
-                "source": "OpenWeatherMap",
+                "source": "OpenWeatherMap"
             }
+
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=f"External API error: {e}")
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail=f"External API unreachable: {e}")
     except Exception as e:
-        print(f"[WARNING]  AQI API error: {e} — using mock data")
-        return _mock_response(city)
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Internal processing error: {str(e)}")

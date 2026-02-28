@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from database import connect_db, disconnect_db
-from routes import aqi, risk, users, analytics, chat, predict
+from routes import aqi, risk, users, analytics, chat, predict, finger_ppg
 import os
 
 DEMO_MODE = os.getenv("DEMO_MODE", "true").lower() == "true"
@@ -57,6 +57,7 @@ app.include_router(users.router)
 app.include_router(analytics.router)
 app.include_router(chat.router)
 app.include_router(predict.router)
+app.include_router(finger_ppg.router)
 
 @app.get("/", tags=["Health"])
 async def root():
@@ -66,3 +67,5 @@ async def root():
         "docs": "/docs",
         "endpoints": ["/aqi/{city}", "/calculate-risk", "/user/{id}", "/public-analytics", "/predict-pm25"],
     }
+
+# Forced reload trigger

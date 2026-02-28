@@ -1,0 +1,1 @@
+{"top_contributing_features": ["AQI", "PM2.5", "PM10", "O3", "NO2"], "target_original_min": 22.44848790137248, "target_original_max": 100.0, "metrics": {"mae": 1.3104375006233306, "r2": 0.9636914176052754}}

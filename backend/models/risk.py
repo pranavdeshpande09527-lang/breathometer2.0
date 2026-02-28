@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 
 
 class RiskRequest(BaseModel):
@@ -13,7 +13,7 @@ class RiskRequest(BaseModel):
     user_id: Optional[str] = None
     city: Optional[str] = None
     # Add profile to allow backend scoring
-    profile: Optional[dict] = None
+    profile: Optional[Dict[str, Any]] = None
 
 
 class RiskResponse(BaseModel):

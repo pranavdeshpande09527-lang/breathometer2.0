@@ -11,8 +11,10 @@
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #0a0a14 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #020617 100%);
+  /* slate-900, slate-800, slate-950 */
+  color: #f8fafc;
+  /* slate-50 */
   min-height: 100vh;
 }
 
@@ -22,16 +24,19 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a2e;
+  background: #1e293b;
+  /* slate-800 */
 }
 
 ::-webkit-scrollbar-thumb {
   background: #334155;
+  /* slate-700 */
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #1e293b;
+  /* slate-800 */
 }
 
 /* ── Glass Card Utility ────────────────────────────────── */

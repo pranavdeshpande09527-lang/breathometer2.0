@@ -16,7 +16,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = r"C:\Users\prana\OneDrive\Documents\realdata"
+DATA_DIR = os.getenv("DATASET_PATH", r"C:\Users\prana\OneDrive\Documents\realdata")
 PM25_MODEL_PATH = os.path.join(SCRIPT_DIR, "pm25_model.pkl")
 
 # 5 features the user will provide
@@ -24,6 +24,9 @@ FEATURES = ["T", "H", "SLP", "VV", "V"]
 
 
 def load_and_clean(target_col):
+    if not os.path.exists(DATA_DIR):
+        raise FileNotFoundError(f"Dataset path does not exist: {DATA_DIR}. Set DATASET_PATH environment variable.")
+        
     frames = []
     for year in range(2013, 2017):
         path = os.path.join(DATA_DIR, f"real_{year}.csv")
@@ -37,8 +40,7 @@ def load_and_clean(target_col):
             frames.append(df)
 
     if not frames:
-        print(f"[WARNING]  No data found with column '{target_col}'")
-        return pd.DataFrame()
+        raise ValueError(f"No valid data found in {DATA_DIR} with column '{target_col}'")
 
     data = pd.concat(frames, ignore_index=True)
     data[target_col] = pd.to_numeric(data[target_col], errors="coerce")

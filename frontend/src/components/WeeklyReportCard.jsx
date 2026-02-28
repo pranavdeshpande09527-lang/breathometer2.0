@@ -67,9 +67,9 @@ export default function WeeklyReportCard({ aqiData, profile, predictedPm25, pred
     };
 
     const getHexColor = (level) => {
-        if (level === 'High') return '#ef4444';      // danger-500
-        if (level === 'Moderate') return '#f59e0b';  // warning-500
-        return '#1aaf64';                            // safe-500
+        if (level === 'High') return '#f43f5e';      // rose-500
+        if (level === 'Moderate') return '#f59e0b';  // amber-500
+        return '#10b981';                            // emerald-500
     };
 
     const lineData = report ? {
@@ -83,7 +83,7 @@ export default function WeeklyReportCard({ aqiData, profile, predictedPm25, pred
                 borderWidth: 3,
                 tension: 0.4,
                 fill: true,
-                pointBackgroundColor: '#0f0f1a',
+                pointBackgroundColor: '#0f172a',
                 pointBorderColor: getHexColor(report.avg_risk_level),
                 pointBorderWidth: 2,
                 pointRadius: 4,
@@ -98,7 +98,7 @@ export default function WeeklyReportCard({ aqiData, profile, predictedPm25, pred
         plugins: {
             legend: { display: false },
             tooltip: {
-                backgroundColor: '#1a1a2e',
+                backgroundColor: '#1e293b',
                 titleColor: '#e2e8f0',
                 bodyColor: '#94a3b8',
                 borderColor: 'rgba(255,255,255,0.1)',

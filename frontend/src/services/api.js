@@ -4,7 +4,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-    baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000',
+    baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:9000',
     timeout: 10000,
     headers: { 'Content-Type': 'application/json' },
 });
@@ -32,9 +32,9 @@ export const sendChatMessage = (payload) =>
 export const predictAirQuality = (weatherData) =>
     API.post('/predict-air-quality', weatherData).then((r) => r.data);
 
-/** POST /predict-lung-risk */
+/** POST /predict-ai-lung-risk */
 export const predictLungRisk = (data) =>
-    API.post('/predict-lung-risk', data).then((r) => r.data);
+    API.post('/predict-ai-lung-risk', data).then((r) => r.data);
 
 /** POST /generate-weekly-report */
 export const generateWeeklyReport = (data) =>

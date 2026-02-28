@@ -4,9 +4,9 @@
 import React from 'react';
 
 const getColor = (level) => {
-    if (level === 'Safe') return { stroke: '#1aaf64', text: 'text-brand-teal', label: 'text-safe-500' };
-    if (level === 'Moderate') return { stroke: '#f59e0b', text: 'text-warning-400', label: 'text-warning-500' };
-    return { stroke: '#ff3d3d', text: 'text-danger-400', label: 'text-danger-500' };
+    if (level === 'Safe') return { stroke: '#10b981', text: 'text-safe-500', label: 'text-safe-500' };
+    if (level === 'Moderate') return { stroke: '#f59e0b', text: 'text-warning-500', label: 'text-warning-500' };
+    return { stroke: '#f43f5e', text: 'text-danger-500', label: 'text-danger-500' };
 };
 
 export default function RiskGauge({ score = 0, level = 'Safe' }) {
